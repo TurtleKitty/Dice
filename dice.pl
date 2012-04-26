@@ -5,30 +5,77 @@ use strict;
 use warnings;
 
 
-sub xdy ($$) {
-    my ($num, $die) = @_;
+sub mkroll ($) {
+    my ($r) = @_;
 
-    my $total = 0;
+    my @result;
 
-    for (1 .. $num) {
-	$total += int(rand($die)) + 1;
+    for my $i (1 .. $r->{die}) {
+	push(@result, { coeff => 1, expon => $i });
     }
 
-    return $total;
+    return \@result;
+}
+
+
+sub poly_multiply ($$) {
+    my ($p1, $p2) = @_;
+
+    my @result;
+
+    for my $i (@$p1) {
+	for my $j (@$p2) {
+	    push(@result, {
+		coeff => $i->{coeff} * $j->{coeff},
+		expon => $i->{expon} + $j->{expon},
+	    });
+	}
+    }
+
+    return \@result;
+}
+
+
+sub poly_simplify {
+    my ($p) = @_;
+
+    my %yash;
+
+    for my $term (@$p) {
+	$yash{ $term->{expon} } //= 0;
+	$yash{ $term->{expon} }  += $term->{coeff};
+    }
+
+    my @rez;
+
+    for my $exp (sort { $b <=> $a } keys %yash) {
+	push(@rez, { coeff => $yash{$exp}, expon => $exp });
+    }
+
+    return \@rez;
 }
 
 
 sub parse ($) {
-    my ($dstring) = @_;
+    my ($args) = @_;
 
+    my $constant = 0;
     my @rolls;
 
-    for my $t ( split('\+', $dstring) ) {
-	my ($n, $d) = split('d', $t);
-	push(@rolls, { num => $n, die => $d });
+    for my $t (@$args) {
+	if ($t =~ /d/) {
+	    my ($n, $d) = split('d', $t);
+	    push(@rolls, { num => $n, die => $d });
+	}
+	else {
+	    $constant += $t;
+	}
     }
 
-    return(\@rolls);
+    return {
+	const => $constant,
+	rolls => \@rolls
+    };
 }
 
 
@@ -42,11 +89,6 @@ sub sum ($) {
     }
 
     return($sum);
-}
-
-
-sub monty_carlo {
-
 }
 
 
