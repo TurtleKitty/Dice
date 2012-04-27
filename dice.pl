@@ -1,20 +1,79 @@
 #!/usr/bin/perl
 
-
 use strict;
 use warnings;
+
+use Data::Dumper;
+
+
+print main();
+
+
+sub main {
+    my $args = parse(\@ARGV);
+
+    my @polys;
+
+    my $combinations = 1;
+
+    for my $r (@{ $args->{rolls} }) {
+	$combinations *= $r->{die} ** $r->{num};
+	push(@polys, @{ mkroll($r) });
+    }
+
+    my $bigpoly = poly_simplify( megamul(\@polys) );
+
+    for my $term (@$bigpoly) {
+	$term->{expon} += $args->{const};
+	$term->{coeff} /= $combinations;
+    }
+
+    my $output = "\n";
+
+    for my $term (sort { $a->{expon} <=> $b->{expon} } @$bigpoly) {
+	$output .= sprintf("%-8d%.5f\n", $term->{expon}, $term->{coeff});
+    }
+
+    return $output . "\n";
+}
 
 
 sub mkroll ($) {
     my ($r) = @_;
 
-    my @result;
+    my @results;
 
-    for my $i (1 .. $r->{die}) {
-	push(@result, { coeff => 1, expon => $i });
+    for my $i (1 .. $r->{num}) {
+	my @result;
+
+	for my $i (1 .. $r->{die}) {
+	    push(@result, { coeff => 1, expon => $i });
+	}
+
+	push @results, \@result;
     }
 
-    return \@result;
+    return \@results;
+}
+
+
+sub poly_simplify {
+    my ($p) = @_;
+
+    my %yash;
+
+    for my $term (@$p) {
+	$yash{ $term->{expon} } //= 0;
+	$yash{ $term->{expon} }  += $term->{coeff};
+    }
+
+    my @rez;
+
+    for my $exp (sort { $b <=> $a } keys %yash) {
+	push(@rez, { coeff => $yash{$exp}, expon => $exp });
+    }
+
+    return \@rez;
 }
 
 
@@ -36,23 +95,16 @@ sub poly_multiply ($$) {
 }
 
 
-sub poly_simplify {
-    my ($p) = @_;
+sub megamul {
+    my ($polys) = @_;
 
-    my %yash;
+    my $result = shift(@$polys);
 
-    for my $term (@$p) {
-	$yash{ $term->{expon} } //= 0;
-	$yash{ $term->{expon} }  += $term->{coeff};
+    for my $p (@$polys) {
+	$result = poly_multiply($result, $p);
     }
 
-    my @rez;
-
-    for my $exp (sort { $b <=> $a } keys %yash) {
-	push(@rez, { coeff => $yash{$exp}, expon => $exp });
-    }
-
-    return \@rez;
+    return $result;
 }
 
 
