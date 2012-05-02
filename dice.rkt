@@ -56,6 +56,9 @@
 		    (car yash)
 		    (+ (cdr yash) (string->number arg)))])))
 
+(define (mkhg x)
+    (make-string (inexact->exact (round (* 500 x))) #\#))
+
 (define input (args))
 (define rolls (car input))
 (define addme (cdr input))
@@ -76,8 +79,9 @@
 
 (newline)
 (for ([i (in-range 0 (vector-length dist))])
-    (if (> (vector-ref dist i) 0)
-	(displayln (format "~a~a~a" (+ i addme) #\tab (vector-ref dist i)))
-	""))
+    (let ([px (vector-ref dist i)])
+	(if (> px 0)
+	    (displayln (format "~a\t  ~a\t  ~a" (+ i addme) px (mkhg px)))
+	    "")))
 (newline)
 
