@@ -1,33 +1,26 @@
 #lang racket
 
 (define (poly-deg p)
-    (cdr (argmax cdr p)))
-
-(define (addterms p n)
-    (foldl
-	(λ (x acc)
-	    (cons (+ (car x) (car acc)) (cdr acc)))
-	(cons 0 n)
-	(filter (λ (y) (equal? n (cdr y))) p)))
-
-(define (poly-simp p)
-    (define deg (poly-deg p))
-    (filter (λ (x) (> (car x) 0))
-	(for/list ([pow (in-range deg -1 -1)])
-	    (addterms p pow))))
+    (vector-length p))
 
 (define (poly-mul p1 p2)
-    (for*/list ([x p1] [y p2])
-	(cons
-	    (* (car x) (car y))
-	    (+ (cdr x) (cdr y)))))
+    (define deg1 (poly-deg p1))
+    (define deg2 (poly-deg p2))
+    (for*/fold ([noob (make-vector (- (+ deg1 deg2) 1))])
+	([ i (in-range 1 deg1)]
+	 [ j (in-range 1 deg2)])
+	(begin
+	    (vector-set!
+		noob (+ i j)
+		(+  (vector-ref noob (+ i j))
+		    (* (vector-ref p1 i) (vector-ref p2 j))))
+	    noob)))
 
 (define (mega-mul ps)
     (foldl poly-mul (car ps) (cdr ps)))
 
 (define (mkdie d)
-    (for/list ([i (in-range 1 (+ 1 d))])
-	(cons 1 i)))
+    (make-vector (+ 1 d) 1))
 
 (define (mkroll r)
     (define n (car r))
@@ -73,23 +66,18 @@
 	rolls))
 
 (define dist
-    (map
-	(λ (x)
-	    (cons
-		(cool-round (/ (car x) combinations) 5)
-		(cdr x)))
-	(reverse
-	    (map
-		(λ (x) (cons (car x) (+ addme (cdr x))))
-		(poly-simp
-		    (mega-mul
-			(for/fold
-			    ([ls '()])
-			    ([r rolls])
-			    (append (mkroll r) ls))))))))
+    (vector-map
+	(λ (x) (cool-round (/ x combinations) 5))
+	(mega-mul
+	    (for/fold
+		([ls '()])
+		([r rolls])
+		(append (mkroll r) ls)))))
 
 (newline)
-(for ([i dist])
-    (displayln (format "~a~a~a" (cdr i) #\tab (car i))))
+(for ([i (in-range 0 (vector-length dist))])
+    (if (> (vector-ref dist i) 0)
+	(displayln (format "~a~a~a" (+ i addme) #\tab (vector-ref dist i)))
+	""))
 (newline)
 

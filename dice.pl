@@ -3,8 +3,7 @@
 use strict;
 use warnings;
 
-use Data::Dumper;
-
+use List::AllUtils;
 
 print main();
 
@@ -21,90 +20,24 @@ sub main {
 	push(@polys, @{ mkroll($r) });
     }
 
-    my $bigpoly = poly_simplify( megamul(\@polys) );
+    my $bigpoly = megamul(\@polys);
+    my @final	= map { $_ / $combinations } @$bigpoly;
 
-    for my $term (@$bigpoly) {
-	$term->{expon} += $args->{const};
-	$term->{coeff} /= $combinations;
-    }
+    my $min = List::AllUtils::firstidx { defined($_) && $_ > 0 } @final;
+    my $max = $#final;
 
     my $output = "\n";
 
-    for my $term (sort { $a->{expon} <=> $b->{expon} } @$bigpoly) {
-	$output .= sprintf("%-8d%.5f\n", $term->{expon}, $term->{coeff});
+    for my $exp ($min .. $max) {
+	$output .= sprintf(
+	    "%-10d%-10.5f%-48s\n",
+	    $exp + $args->{const},
+	    $final[$exp],
+	    "#" x sprintf("%.0f", 500 * $final[$exp])
+	);
     }
 
     return $output . "\n";
-}
-
-
-sub mkroll ($) {
-    my ($r) = @_;
-
-    my @results;
-
-    for my $i (1 .. $r->{num}) {
-	my @result;
-
-	for my $i (1 .. $r->{die}) {
-	    push(@result, { coeff => 1, expon => $i });
-	}
-
-	push @results, \@result;
-    }
-
-    return \@results;
-}
-
-
-sub poly_simplify {
-    my ($p) = @_;
-
-    my %yash;
-
-    for my $term (@$p) {
-	$yash{ $term->{expon} } //= 0;
-	$yash{ $term->{expon} }  += $term->{coeff};
-    }
-
-    my @rez;
-
-    for my $exp (sort { $b <=> $a } keys %yash) {
-	push(@rez, { coeff => $yash{$exp}, expon => $exp });
-    }
-
-    return \@rez;
-}
-
-
-sub poly_multiply ($$) {
-    my ($p1, $p2) = @_;
-
-    my @result;
-
-    for my $i (@$p1) {
-	for my $j (@$p2) {
-	    push(@result, {
-		coeff => $i->{coeff} * $j->{coeff},
-		expon => $i->{expon} + $j->{expon},
-	    });
-	}
-    }
-
-    return \@result;
-}
-
-
-sub megamul {
-    my ($polys) = @_;
-
-    my $result = shift(@$polys);
-
-    for my $p (@$polys) {
-	$result = poly_multiply($result, $p);
-    }
-
-    return $result;
 }
 
 
@@ -131,20 +64,54 @@ sub parse ($) {
 }
 
 
-sub sum ($) {
-    my ($list) = @_;
+sub mkroll ($) {
+    my ($r) = @_;
 
-    my $sum = 0;
+    my @results;
 
-    for my $item (@$list) {
-	$sum += $item;
+    for my $i (1 .. $r->{num}) {
+	my @result;
+
+	for my $i (1 .. $r->{die}) {
+	    $result[$i] = 1;
+	}
+
+	push @results, \@result;
     }
 
-    return($sum);
+    return \@results;
+}
+
+
+sub poly_multiply ($$) {
+    my ($p1, $p2) = @_;
+
+    my @result;
+
+    for (my $i = 0; $i < @$p1; $i++) {
+	for (my $j = 0; $j < @$p2; $j++) {
+	    my $t1 = $p1->[$i] // 0;
+	    my $t2 = $p2->[$j] // 0;
+	    $result[ $i + $j ] += $t1 * $t2;
+	}
+    }
+
+    return \@result;
+}
+
+
+sub megamul {
+    my ($polys) = @_;
+
+    my $result = shift(@$polys);
+
+    for my $p (@$polys) {
+	$result = poly_multiply($result, $p);
+    }
+
+    return $result;
 }
 
 
 1;
-
-
 
