@@ -72,8 +72,8 @@ sub mkroll ($) {
     for my $i (1 .. $r->{num}) {
 	my @result;
 
-	for my $i (1 .. $r->{die}) {
-	    $result[$i] = 1;
+	for my $j (1 .. $r->{die}) {
+	    $result[$j] = 1;
 	}
 
 	push @results, \@result;
