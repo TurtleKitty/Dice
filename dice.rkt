@@ -1,26 +1,27 @@
 #lang racket
 
+(define (poly-min p)
+    (argmin values (hash-keys p)))
+
 (define (poly-deg p)
-    (vector-length p))
+    (argmax values (hash-keys p)))
+
+(define (poly-range p)
+    (in-range (poly-min p) (+ 1 (poly-deg p))))
 
 (define (poly-mul p1 p2)
-    (define deg1 (poly-deg p1))
-    (define deg2 (poly-deg p2))
-    (for*/fold ([noob (make-vector (- (+ deg1 deg2) 1))])
-	([ i (in-range 1 deg1)]
-	 [ j (in-range 1 deg2)])
-	(begin
-	    (vector-set!
-		noob (+ i j)
-		(+  (vector-ref noob (+ i j))
-		    (* (vector-ref p1 i) (vector-ref p2 j))))
-	    noob)))
+    (for*/fold ([noob (hash)]) ([ i (poly-range p1)] [ j (poly-range p2)])
+	(define k (+ i j))
+	(define a (* (hash-ref p1 i) (hash-ref p2 j)))
+	(hash-set noob k (+ (hash-ref noob k 0) a))))
 
 (define (mega-mul ps)
     (foldl poly-mul (car ps) (cdr ps)))
 
 (define (mkdie d)
-    (make-vector (+ 1 d) 1))
+    (make-immutable-hash
+	(for*/list ([i (in-range 1 (+ 1 d))] [j (in-value 1)])
+	    (cons i j))))
 
 (define (mkroll r)
     (define n (car r))
@@ -36,6 +37,12 @@
 (define (cool-round x y)
     (define scalar (expt 10 y))
     (/ (round (* x scalar)) scalar))
+
+(define (mkhg x)
+    (make-string (inexact->exact (round (* 500 x))) #\#))
+
+
+; input
 
 (define (args)
     (define yarr
@@ -56,32 +63,41 @@
 		    (car yash)
 		    (+ (cdr yash) (string->number arg)))])))
 
-(define (mkhg x)
-    (make-string (inexact->exact (round (* 500 x))) #\#))
-
 (define input (args))
 (define rolls (car input))
 (define addme (cdr input))
 (define combinations
     (foldl 
-	(λ (x sum) (+ sum (expt (cdr x) (car x))))
-	0.0
+	(λ (x sum) (* sum (expt (cdr x) (car x))))
+	1.0
 	rolls))
 
+(define polys
+    (for/fold
+	([ls '()])
+	([r rolls])
+	(append (mkroll r) ls)))
+
 (define dist
-    (vector-map
-	(λ (x) (cool-round (/ x combinations) 5))
-	(mega-mul
-	    (for/fold
-		([ls '()])
-		([r rolls])
-		(append (mkroll r) ls)))))
+    (hash-map
+	(mega-mul polys)
+	(λ (k v)
+	    (cons
+		(+ k addme)
+		(cool-round (/ v combinations) 5)))))
+
+(define output
+    (string-join
+	(map
+	    (λ (term)
+		(let ([x (car term)] [px (cdr term)])
+		    (if (> px 0)
+			(format "~a\t\t~a\t\t~a\n" x px (mkhg px))
+			"")))
+	    (sort dist (λ (a b) (< (car a) (car b)))))
+	""))
 
 (newline)
-(for ([i (in-range 0 (vector-length dist))])
-    (let ([px (vector-ref dist i)])
-	(if (> px 0)
-	    (displayln (format "~a\t  ~a\t  ~a" (+ i addme) px (mkhg px)))
-	    "")))
+(display output)
 (newline)
 
