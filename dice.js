@@ -16,7 +16,7 @@ function mkhg (x) {
 	result = []
     ;
 
-    for (var i = 0; i <= num; i++) {
+    for (var i = 0; i < num; i++) {
 	result.push("#");
     }
 
@@ -25,7 +25,7 @@ function mkhg (x) {
 
 
 function main () {
-    var args = parse(process.argv),
+    var args = parse(process.argv.splice(2)),
 	polys = [],
 	combinations = 1,
 	bigpoly = [],
@@ -36,27 +36,22 @@ function main () {
 
     args.rolls.forEach(
 	function (e, i) {
+	    min += e.num;
+	    max += e.num * e.die;
 	    combinations *= Math.pow(e.die, e.num);
-	    polys.push( mkroll( e ) );
+	    polys = polys.concat( mkroll(e) );
 	}
     );
 
     bigpoly = megamul(polys).map(
 	function (x) {
-	    cool_round(x / combinations, 5)
-	}
-    )
-
-    bigpoly.forEach(
-	function (x) {
-	    if (x < min) { min = x; }
-	    if (x > max) { max = x; }
+	    return cool_round(x / combinations, 5);
 	}
     );
 
     for (var exp = min; exp <= max; exp++) {
 	output += utils.format(
-	    "%-10d%-10.5f%-48s\n",
+	    "%d\t\t%d\t\t%s\n",
 	    exp + args.const,
 	    bigpoly[exp],
 	    mkhg(bigpoly[exp])
@@ -74,16 +69,16 @@ function parse (args) {
 
     args.forEach(
 	function (arg) {
-	    if (arg =~ /d/) {
+	    if (arg.match(/d/)) {
 		var yarr = arg.split('d');
-		    n	 = yarr[0],
-		    d	 = yarr[1]
+		    n	 = parseInt(yarr[0]),
+		    d	 = parseInt(yarr[1])
 		;
 
 		rolls.push({ num : n, die : d });
 	    }
 	    else {
-		constant += arg;
+		constant += parseInt(arg);
 	    }
 	}
     );
@@ -115,11 +110,12 @@ function mkroll (r) {
 function poly_multiply (p1, p2) {
     var result = [];
 
-    for (var i = 0; i < p1.length; i++) {
-	for (var j = 0; j < p2.length; j++) {
-	    var t1 = p1[i] || 0;
-	    var t2 = p2[j] || 0;
-	    result[ i + j ] += t1 * t2;
+    for (var i = 1; i < p1.length; i++) {
+	for (var j = 1; j < p2.length; j++) {
+	    var k = i + j;
+	    var a = (p1[i] || 0) * (p2[j] || 0);
+	    result[k]  = result[k] || 0;
+	    result[k] += a;
 	}
     }
 

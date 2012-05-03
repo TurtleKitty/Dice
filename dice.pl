@@ -30,7 +30,7 @@ sub main {
 
     for my $exp ($min .. $max) {
 	$output .= sprintf(
-	    "%-10d%-10.5f%-48s\n",
+	    "%d\t\t%.5f\t\t%s\n",
 	    $exp + $args->{const},
 	    $final[$exp],
 	    "#" x sprintf("%.0f", 500 * $final[$exp])
