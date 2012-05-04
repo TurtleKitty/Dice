@@ -25,9 +25,9 @@ int main (int argc, char* argv[]) {
     int min = 0;
     int max = 0;
 
-    biggun cmb	    = 1;
-    biggun constant = 0;
-    int nrolls	    = 0;
+    biggun cmb		= 1;
+    long int constant	= 0;
+    int nrolls		= 0;
 
     int *rolls[argc];
 
@@ -51,7 +51,7 @@ int main (int argc, char* argv[]) {
 	    nrolls++;
 	}
 	else {
-	    constant += strtoull(argv[i], NULL, 100);
+	    constant += atol(argv[i]);
 	}
     }
 
@@ -86,14 +86,14 @@ int main (int argc, char* argv[]) {
 	biggie = poly_mul(biggie, polys[i]);
     }
 
-debug(min, max, cmb, biggie); 
+    // debug(min, max, cmb, biggie); 
 
     for (int i = min; i <= biggie->degree; i++) {
-	biggun n = (biggun)i + constant;
+	long n = i + constant;
 	ldub p = (ldub) biggie->coeffz[i] / (ldub) cmb;
 	char *hg = mkpounds(p);
 
-	printf("%Lu\t\t%.5Lf\t\t%s\n", n, p, hg);
+	printf("%ld\t\t%.5Lf\t\t%s\n", n, p, hg);
     }
 
     return 0;
