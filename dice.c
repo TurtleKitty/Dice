@@ -4,26 +4,31 @@
 #include <string.h>
 
 
+typedef unsigned long long int biggun;
+typedef long double ldub;
+
 typedef struct {
     int degree;
-    int *coeffz;
+    biggun *coeffz;
 } Poly;
 
 
-Poly *mkpoly (int d);
-Poly **mkroll (int n, int d);
+Poly *mkpoly(int d);
+Poly **mkroll(int n, int d);
 Poly *poly_mul(Poly *x, Poly *y);
-char *mkpounds(double n);
-int  power(int n, int exp);
+char *mkpounds(ldub n);
+biggun power(int n, int exp);
+void debug(int min, int max, biggun cmb, Poly *p);
 
 
 int main (int argc, char* argv[]) {
     int min = 0;
     int max = 0;
-    int deg = 0;
-    int cmb = 1;
-    int constant = 0;
-    int nrolls   = 0;
+
+    biggun cmb	    = 1;
+    biggun constant = 0;
+    int nrolls	    = 0;
+
     int *rolls[argc];
 
     for (int i = 1; i < argc; i++) {
@@ -46,7 +51,7 @@ int main (int argc, char* argv[]) {
 	    nrolls++;
 	}
 	else {
-	    constant += atoi(argv[i]);
+	    constant += strtoull(argv[i], NULL, 100);
 	}
     }
 
@@ -55,13 +60,12 @@ int main (int argc, char* argv[]) {
 	int d = rolls[i][1];
 
 	min += n;
-	max += d;
-	deg  = (deg >= d) ? deg : d;
+	max += n*d;
 	cmb *= power(d, n);
     }
 
     Poly **polys;
-    polys = calloc(min, sizeof(int *));
+    polys = calloc(min, sizeof(Poly *));
 
     int k = 0;
     for (int i = 0; i < nrolls; i++) {
@@ -82,12 +86,14 @@ int main (int argc, char* argv[]) {
 	biggie = poly_mul(biggie, polys[i]);
     }
 
+debug(min, max, cmb, biggie); 
+
     for (int i = min; i <= biggie->degree; i++) {
-	int n	 = i + constant;
-	double p = (double) biggie->coeffz[i] / (double) cmb;
+	biggun n = (biggun)i + constant;
+	ldub p = (ldub) biggie->coeffz[i] / (ldub) cmb;
 	char *hg = mkpounds(p);
 
-	printf("%d\t\t%.5f\t\t%s\n", n, p, hg);
+	printf("%Lu\t\t%.5Lf\t\t%s\n", n, p, hg);
     }
 
     return 0;
@@ -97,8 +103,9 @@ int main (int argc, char* argv[]) {
 Poly *mkpoly (int d) {
     Poly *p;
 
+    p = calloc(1, sizeof(Poly));
     p->degree = d;
-    p->coeffz = calloc((d + 1), sizeof(int));
+    p->coeffz = calloc((d + 1), sizeof(biggun));
 
     for (int i = 1; i <= d; i++) {
 	p->coeffz[i] = 1;
@@ -127,7 +134,7 @@ Poly *poly_mul (Poly *x, Poly *y) {
     noob = calloc(1, sizeof(Poly));
 
     noob->degree = x->degree + y->degree;
-    noob->coeffz = calloc(noob->degree + 1, sizeof(int *));
+    noob->coeffz = calloc(noob->degree + 1, sizeof(biggun));
 
     for (int i = 0; i <= noob->degree; i++) {
 	noob->coeffz[i] = 0;
@@ -143,8 +150,8 @@ Poly *poly_mul (Poly *x, Poly *y) {
 }
 
 
-int power (int n, int exp) {
-    int result = 1;
+biggun power (int n, int exp) {
+    biggun result = 1;
 
     for (int i = 1; i <= exp; i++) {
 	result *= n;
@@ -154,9 +161,12 @@ int power (int n, int exp) {
 }
 
 
-char *mkpounds (double n) {
+char *mkpounds (ldub n) {
     int num = (int) (0.5 + (500 * n));
     char *rv;
+
+    if (num == 0) return "";
+
     rv = calloc(num + 1, sizeof(char));
 
     for (int i = 0; i < num; i++) {
@@ -169,6 +179,12 @@ char *mkpounds (double n) {
 }
 
 
+void debug(int min, int max, biggun cmb, Poly *p) {
+    printf("Range: %d - %d\tCombinations: %Lu | %Lf\n", min, max, cmb, (ldub) cmb);
 
+    for (int i = min; i <= p->degree; i++) {
+	printf("%d\t%Lu\n", i, p->coeffz[i]);
+    }
+}
 
 
