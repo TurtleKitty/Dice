@@ -10,7 +10,8 @@ int main (int argc, char* argv[]) {
     printf("\n");
     Biggun *x = newB(argv[1]);
     Biggun *y = newB(argv[2]);
-    printf("%s\n\n", showB( Badd(x,y) ));
+    Biggun *z = Bmul(x,y);
+    printf("%s\n\n", showB(z));
 }
 
 
@@ -82,9 +83,6 @@ Biggun *Badd(Biggun *x, Biggun *y) {
     int yleft  = ys - ye;
     int yright = ys - yleft;
 
-    // 398000.01         exp 5 size 8
-    //     30.010257924  exp 1 size 11
-
     int size  = bigger(xs, ys) + 1;
 
     char *xpad, *ypad, *rval;
@@ -103,8 +101,6 @@ Biggun *Badd(Biggun *x, Biggun *y) {
     int exp  = bigger(xe, ye);
     int end  = strlen(xpad);
     int rem  = 0;
-
-printf("xpad: %s\nypad: %s\n\n", xpad, ypad);
 
     int i;
     for (i = 0; i < end; i++) {
@@ -139,7 +135,64 @@ printf("xpad: %s\nypad: %s\n\n", xpad, ypad);
 
 
 Biggun *Bmul(Biggun *x, Biggun *y) {
+    int xe = x->exp;
+    int ye = y->exp;
+    int xs = x->size;
+    int ys = y->size;
+
+    int xleft  = xs - xe;
+    int xright = xs - xleft;
+
+    int yleft  = ys - ye;
+    int yright = ys - yleft;
+
+    int size  = bigger(xs, ys) + 1;
+
+    char *xpad, *ypad;
+
+    xpad = calloc(size, sizeof(char));
+    ypad = calloc(size, sizeof(char));
+
+    padchoose(xleft, xpad, yleft, ypad);
+
+    strcat(xpad, x->digits);
+    strcat(ypad, y->digits);
+
+    padchoose(xright, xpad, yright, ypad);
+
+    int exp  = xe + ye;
+    int end  = strlen(xpad);
+    int rem  = 0;
+
     Biggun *noob = newB("0");
+    noob->digits = calloc(xs + ys + 1, sizeof(char));
+
+    for (int i = 0; i < end; i++) {
+	for (int j = 0; j < end; j++) {
+	    int n = ctoi(xpad[i]) * ctoi(ypad[j]) + rem;
+
+	    if (n > 9) {
+		rem = n / 10;
+		n   = n % 10;
+	    }
+
+	    Biggun *bn = itoB(n);
+
+	    if (j > 0) {
+		Biggun *scale = Bpow(10, j);
+		bn = Bmul(bn, scale);
+	    }
+
+	    noob = Badd(noob, bn);
+	}
+    }
+
+    if (rem > 0) {
+	noob->digits[ strlen(noob->digits) ] = rem;
+    }
+
+    noob->exp = exp;
+
     return noob;
 }
 
@@ -150,7 +203,7 @@ Biggun *Bdiv(Biggun *x, Biggun *y) {
 }
 
 
-Biggun *Bpower (int n, int exp) {
+Biggun *Bpow (int n, int exp) {
     Biggun *rval = newB("1");
 
     char* nstr = itos(n);
@@ -173,7 +226,7 @@ char *itos (int n) {
 
 char itoc (int n)  { return (char) ('0' + n  ); }
 int  ctoi (char c) { return (int)  ( c - '0' ); }
-
+Biggun *itoB (int n) { return newB(itos(n)); }
 
 char *reverse_s (char *s) {
     int len = strlen(s);
