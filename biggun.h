@@ -5,7 +5,7 @@
 typedef struct {
     int size;
     int exp;
-    char* digits;
+    int *digits;
 } Biggun;
 
 
@@ -20,10 +20,11 @@ char	*itos (int n);
 char	itoc (int n);
 int	ctoi (char c);
 Biggun  *itoB (int n);
-char	*reverse_s (char *s);
+int	*reverse (int *x);
+int	*append  (int *x, int *y, int start);
 int	bigger(int x, int y);
-void	padchoose (int x, char *xbuf, int y, char *ybuf);
-void	padzero (int padding, char *buf);
+void	padchoose (int x, int *xbuf, int y, int *ybuf);
+void	padzero (int padding, int *buf);
 
 
 #endif

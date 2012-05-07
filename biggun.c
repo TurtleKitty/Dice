@@ -6,12 +6,17 @@
 #include "biggun.h"
 
 
+const int cell = sizeof(int);
+
+
 int main (int argc, char* argv[]) {
     printf("\n");
     Biggun *x = newB(argv[1]);
     Biggun *y = newB(argv[2]);
-    Biggun *z = Bmul(x,y);
-    printf("%s\n\n", showB(z));
+    printf("%s\n%s\n\n", showB(x), showB(y));
+    Biggun *z = Badd(x,y);
+    Biggun *t = Bmul(x,y);
+    printf("%s\n%s\n\n", showB(z), showB(t));
 }
 
 
@@ -34,38 +39,66 @@ Biggun *newB (char *n) {
     }
 
     noob->exp	 = (int)strlen(integral) - 1;
-    noob->size	 = (int)strlen(integral) + (int)strlen(fractional) + 1; 
-    noob->digits = calloc(noob->size, sizeof(char));
-    char buf[noob->size + 2];
-    snprintf(buf, noob->size, "%s%s", integral, fractional);
-    noob->digits = reverse_s(buf);
+    noob->size	 = (int)strlen(integral) + (int)strlen(fractional);
+
+    int sz	 = noob->size + 1;
+    noob->digits = calloc(sz, cell);
+
+    char cbuf[sz];
+    int  ibuf[sz];
+
+    snprintf(cbuf, sz, "%s%s", integral, fractional);
+
+    for (int i = 0; i < sz; i++) {
+	ibuf[i] = ctoi(cbuf[i]);
+    }
+
+    noob->digits = reverse(ibuf);
+
+    return noob;
+}
+
+
+Biggun *mkB (int *digits) {
+    Biggun *noob;
+
+    noob = calloc(1, sizeof(Biggun));
+
+    int sz = sizeof(digits) / cell;
+
+    noob->size = sz;
+    noob->exp  = sz - 1;
+    noob->digits = digits;
 
     return noob;
 }
 
 
 char *showB (Biggun *x) {
+    int  *tmp;
     char *output;
-    int sz = x->size + 2;
-    char *tmp;
-    tmp = reverse_s(x->digits);
 
-    output = calloc(sz, sizeof(char));
+    int sz = x->size + 2;
+    tmp = reverse(x->digits);
+
+    output = calloc(sz, cell);
 
     int i;
     for (i = 0; i <= x->exp; i++) {
-	output[i] = tmp[i];
+	output[i] = itoc(tmp[i]);
     }
 
-    if (! (i+1 == x->size)) {
+    if (! (i == x->size)) {
 	output[i] = '.';
 	i++;
 
 	for (int j = i - 1; j < x->size; j++) {
-	    output[i] = tmp[j];
+	    output[i] = itoc(tmp[j]);
 	    i++;
 	}
     }
+
+    output[i] = '\0';
 
     return output;
 }
@@ -85,28 +118,28 @@ Biggun *Badd(Biggun *x, Biggun *y) {
 
     int size  = bigger(xs, ys) + 1;
 
-    char *xpad, *ypad, *rval;
+    int *xpad, *ypad, *rval;
 
-    xpad = calloc(size, sizeof(char));
-    ypad = calloc(size, sizeof(char));
-    rval = calloc(size, sizeof(char));
+    xpad = calloc(size, cell);
+    ypad = calloc(size, cell);
+    rval = calloc(size, cell);
 
     padchoose(xleft, xpad, yleft, ypad);
 
-    strcat(xpad, x->digits);
-    strcat(ypad, y->digits);
+    append(xpad, x->digits, 0);
+    append(ypad, y->digits, 0);
 
     padchoose(xright, xpad, yright, ypad);
 
     int exp  = bigger(xe, ye);
-    int end  = strlen(xpad);
+    int end  = sizeof(xpad) / cell;
     int rem  = 0;
 
     int i;
     for (i = 0; i < end; i++) {
-	char xd  = xpad[i];
-	char yd  = ypad[i];
-	int ndig = ctoi(xd) + ctoi(yd) + rem;
+	int xd  = xpad[i];
+	int yd  = ypad[i];
+	int ndig = xd + yd + rem;
 
 	if (ndig > 9) {
 	    ndig -= 10;
@@ -116,15 +149,15 @@ Biggun *Badd(Biggun *x, Biggun *y) {
 	    rem = 0;
 	}
 
-	*(rval + i) = itoc(ndig);
+	*(rval + i) = ndig;
     }
 
     if (rem > 0) {
-	rval[i] = '1';
+	rval[i] = 1;
 	exp++;
     }
 
-    Biggun *noob = newB(reverse_s(rval));
+    Biggun *noob = mkB(rval);
     noob->exp = exp; // necessary because the string passed had no radix point.
 
     free(xpad);
@@ -148,50 +181,69 @@ Biggun *Bmul(Biggun *x, Biggun *y) {
 
     int size  = bigger(xs, ys) + 1;
 
-    char *xpad, *ypad;
+    int *xpad, *ypad;
 
-    xpad = calloc(size, sizeof(char));
-    ypad = calloc(size, sizeof(char));
+    xpad = calloc(size, cell);
+    ypad = calloc(size, cell);
 
     padchoose(xleft, xpad, yleft, ypad);
 
-    strcat(xpad, x->digits);
-    strcat(ypad, y->digits);
+    append(xpad, x->digits, 0);
+    append(ypad, y->digits, 0);
 
     padchoose(xright, xpad, yright, ypad);
 
-    int exp  = xe + ye;
-    int end  = strlen(xpad);
-    int rem  = 0;
+    int end = size - 1;
+    int rem = 0;
 
     Biggun *noob = newB("0");
-    noob->digits = calloc(xs + ys + 1, sizeof(char));
+    Biggun *Bn   = newB("0");
+    Bn->digits	 = calloc(xs + ys + 1, cell);
 
     for (int i = 0; i < end; i++) {
-	for (int j = 0; j < end; j++) {
-	    int n = ctoi(xpad[i]) * ctoi(ypad[j]) + rem;
+	rem = 0;
+
+	Bn->exp	 = -1;
+	Bn->size = 0;
+
+	int k;
+	for (k = 0; k < i; k++) {
+	    Bn->exp++;
+	    Bn->size++;
+	    Bn->digits[k] = 0;
+	}
+
+	int j;
+	for (j = 0; j < end; j++) {
+	    int xij = xpad[i];
+	    int yij = ypad[j];
+
+	    if (xij == 0 || yij == 0) {
+		j++;
+		continue;
+	    }
+
+	    int n = xij * yij + rem;
 
 	    if (n > 9) {
 		rem = n / 10;
 		n   = n % 10;
 	    }
 
-	    Biggun *bn = itoB(n);
-
-	    if (j > 0) {
-		Biggun *scale = Bpow(10, j);
-		bn = Bmul(bn, scale);
-	    }
-
-	    noob = Badd(noob, bn);
+	    Bn->exp++;
+	    Bn->size++;
+	    Bn->digits[j + k] = n;
 	}
+
+	if (rem > 0) {
+	    Bn->digits[ j + k ] = rem;
+	}
+
+	noob = Badd(noob, Bn);
     }
 
-    if (rem > 0) {
-	noob->digits[ strlen(noob->digits) ] = rem;
-    }
-
-    noob->exp = exp;
+    free(xpad);
+    free(ypad);
 
     return noob;
 }
@@ -206,40 +258,65 @@ Biggun *Bdiv(Biggun *x, Biggun *y) {
 Biggun *Bpow (int n, int exp) {
     Biggun *rval = newB("1");
 
-    char* nstr = itos(n);
-
     for (int i = 1; i <= exp; i++) {
-	rval = Bmul(rval, newB(nstr));
+	rval = Bmul(rval, newB(itos(n)));
     }
 
     return rval;
 }
 
 
-char *itos (int n) {
-    char *nstr;
-    nstr = calloc(n, sizeof(char));
-    snprintf(nstr, n, "%d", n);
+char *itos (int x) {
+    char *nstr; 
+    nstr = calloc(x, cell);
+    snprintf(nstr, x, "%d", x);
     return nstr;
 }
 
 
 char itoc (int n)  { return (char) ('0' + n  ); }
 int  ctoi (char c) { return (int)  ( c - '0' ); }
-Biggun *itoB (int n) { return newB(itos(n)); }
 
-char *reverse_s (char *s) {
-    int len = strlen(s);
-    char *noob;
-    noob = calloc(len, sizeof(char));
+
+Biggun *itoB (int n) {
+    return newB(itos(n));
+}
+
+
+int *reverse (int *x) {
+    int len = sizeof(x) / cell;
+    int *noob;
+
+    noob = calloc(len, cell);
 
     for (int i = 0; i < len; i++) {
-	*(noob + len -i -1) = *(s + i);
+	*(noob + len -i -1) = *(x + i);
     }
 
-    *(noob + len) = '\0';
-
     return noob;
+}
+
+
+int *append (int *x, int *y, int start) {
+    int xs = sizeof(x)/cell;
+    int ys = sizeof(y)/cell;
+
+    int *rval;
+    rval = calloc(xs + ys, cell);
+
+    int c;
+    for (int i = 0; i < xs; i++) {
+	rval[c] = x[i];
+	c++; // lulz
+    }
+
+    c = start;
+    for (int i = 0; i < ys; i++) {
+	rval[c] = y[i];
+	c++; // lulz
+    }
+
+    return rval; 
 }
 
 
@@ -253,23 +330,23 @@ int bigger(int x, int y) {
 }
 
 
-void padchoose (int x, char *xbuf, int y, char *ybuf) {
+void padchoose (int x, int *xbuf, int y, int *ybuf) {
     // return(void) makes me feel dirty.
 
-    if (x >= y) {
+    if (x > y) {
 	padzero(x - y, ybuf);
     }
-    else {
+    else if (y > x) {
 	padzero(y - x, xbuf);
     }
 }
 
 
-void padzero (int padding, char *buf) {
-    int mark = strlen(buf);
+void padzero (int padding, int *buf) {
+    int mark = sizeof(buf) / cell;
 
     for (int i = mark; i < padding + mark; i++) {
-	buf[i] = '0';
+	buf[i] = 0;
     }
 }
 
