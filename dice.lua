@@ -4,7 +4,10 @@
 function main (argv)
     rolls, constant = parse(argv)
 
+    polys = {}
+
     for i, x in pairs(rolls) do
+
 	print(i, x)
     end
 
@@ -28,6 +31,17 @@ function parse (args)
     end
 
     return rv, adder
+end
+
+
+function mkpolys (rolls)
+    polys = {}
+    for d, n in pairs(rolls) do
+	p = {}
+	for i = 1, d do
+	    
+	end
+    end
 end
 
 
