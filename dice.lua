@@ -4,14 +4,15 @@
 function main (argv)
     rolls, constant = parse(argv)
 
-    polys = {}
+    polys = mkpolys(rolls)
 
-    for i, x in pairs(rolls) do
+    combinations = 1;
 
-	print(i, x)
+    biggun = { 1 }
+ 
+    for i, x in pairs(polys) do
+	biggun = polymul(biggun, x)
     end
-
-    print(constant)
 end
 
 
@@ -35,17 +36,25 @@ end
 
 
 function mkpolys (rolls)
-    polys = {}
+    local polys = {}
+
     for d, n in pairs(rolls) do
-	p = {}
-	for i = 1, d do
-	    
+	for i = 1, n do
+	    local p = {}
+
+	    for j = 1, d do
+		p[j] = 1
+	    end
+
+	    table.insert(polys, p)
 	end
     end
+
+    return polys
 end
 
 
-function poly_mul (x, y)
+function polymul (x, y)
     local rv = {};
 
     for i, xi in ipairs(x) do
