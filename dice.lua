@@ -1,13 +1,6 @@
 #!/usr/bin/env lua
 
 
-function inspect (t)
-    for i, xi in pairs(t) do
-	print(i, xi) 
-    end
-end
-
-
 function main (argv)
     local rolls, constant = parse(argv)
 
