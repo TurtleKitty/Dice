@@ -31,7 +31,6 @@ def main():
     combos = 1
     polys  = []
 
-    print rolls
     for r in rolls:
 	n = r[0]
 	d = r[1]
