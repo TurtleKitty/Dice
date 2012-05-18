@@ -19,7 +19,7 @@ ruby dice.rb 1d4 1d6 1d8 1d12 -17
 compC.sh  
 c.exe 1d4 1d6 1d8 1d12 -17  
 
-compHaskell.sh
+compHaskell.sh  
 haskell.exe 1d4 1d6 1d8 1d12 -17  
 
 compRacket.sh  
