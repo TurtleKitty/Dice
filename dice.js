@@ -1,6 +1,6 @@
 
 
-var utils= require('util');
+var utils = require('util');
 
 console.log( main() );
 

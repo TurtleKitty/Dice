@@ -4,6 +4,7 @@ module Main where
 import Data.List
 import qualified Data.Text as DT
 import System( getArgs )
+import Text.Printf
 
 
 -- Polynomail lists:
@@ -47,18 +48,20 @@ parse args = foldl (\acc x ->
     ([], 0, 1) args
 
 hg :: Float -> String
-hg n = map (\x -> '#') [1 .. (0.5 + (500 * n))] 
+hg n = map (\x -> '#') [1 .. (500 * n)] 
+
+coolRound x n = (floor (scalar * x)) / scalar
+    where scalar = 10 ** n
 
 main = do
     args <- getArgs
-    let parsed = parse args
-    let bigpoly = map (\x -> fromIntegral x / (fromIntegral $ trip3 parsed)) $ foldl1 (*) $ trip1 $ parsed
-    let adder = trip2 parsed
-    let combos = trip3 parsed
---    let output = map (\idx -> (show $ idx + adder) ++ (bigpoly !! idx)  ++ (hg $ bigpoly !! idx)) [0 .. (length bigpoly)]
+    let parsed	= parse args
+    let bigpoly = map (\x -> (fromIntegral x) / (fromIntegral (trip3 parsed))) $ foldl1 (*) $ trip1 parsed
+    let adder	= trip2 parsed
+    let combos	= trip3 parsed
+    let output	= unlines $ map (\idx -> printf "%d\t\t%.5f\t\t%s" (idx + adder) (bigpoly !! idx) (hg (bigpoly !! idx))) $ filter (\idx -> (bigpoly !! idx) > 0) [0..(length bigpoly - 1)]
     putStrLn ""
-    print $ hg 0.1667
---    print output
+    putStr output
     putStrLn ""
 
 
