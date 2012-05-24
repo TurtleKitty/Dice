@@ -68,10 +68,45 @@ Object subclass: Poly [
     ]
 ]
 
+const  := 0.
+combos := 1.
+polys  := OrderedCollection new.
 
-p := Poly new: #(1 1 1 1 1 1).
-q := Poly mkroll: 6.
-r := p * q.
-r show.
-(r / 36) show.
+Smalltalk arguments do: [:arg|
+    (arg =~ 'd')
+    ifMatched: [:x|
+	pair := arg subStrings: $d.
+	num  := (pair at: 1) asInteger.
+	die  := (pair at: 2) asInteger.
+
+	combos := combos * (die raisedTo: num).
+
+	1 to: num do: [:i|
+	    polys add: (Poly mkroll: die)
+	]
+    ]
+    ifNotMatched: [
+	const := const + arg
+    ]
+].
+
+bigpoly := Poly mkroll: 1.
+
+polys do: [:poly|
+    bigpoly := bigpoly * poly
+].
+
+bigpoly := bigpoly / combos.
+
+1 to: (bigpoly getDegree) do: [:i|
+    n  := i + const.
+    p  := (bigpoly getCoeff: i).
+    hg := (0.5 + (500 * p)) floor.
+    n display. ' ' display.
+    p display. ' ' display.
+    hg display. ' ' displayNl.
+    "And here is where the output will go..."
+].
+
+(Poly mkroll: 6) getCoeff: 1 displayNl
 
