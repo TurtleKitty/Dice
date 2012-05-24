@@ -15,11 +15,13 @@ function main (argv)
 
     local polys = mkpolys(rolls)
 
-    local biggun = { 1 }
+    local biggun = 1 
  
     for i, x in pairs(polys) do
 	biggun = polymul(biggun, x)
     end
+
+    print "";
 
     for x = min, max+1 do
 	local coeff = biggun[x]
@@ -27,9 +29,11 @@ function main (argv)
 	if coeff then
 	    local px    = coeff / combinations
 	    local hg    = histogram(px)
-	    print( string.format("%d\t\t%.5f\t\t%s", x-1+constant, px, hg) )
+	    print( string.format("%d\t\t%.5f\t\t%s", x + constant, px, hg) )
 	end
     end
+
+    print "";
 end
 
 
@@ -73,6 +77,10 @@ end
 
 function polymul (x, y)
     local rv = {};
+
+    if (x == 1) then
+	return y
+    end
 
     for i, xi in pairs(x) do
 	for j, yj in pairs(y) do
