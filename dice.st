@@ -31,27 +31,37 @@ Object subclass: Poly [
     getCoeff: n [ ^coeffz at: n ]
 
     show [
-	1 to: degree do: [:i| (coeffz at: i) printNl ]
+	1 to: degree do: [:i| i display. ' ' display. (coeffz at: i) displayNl ]
     ]
 
-    * otherPoly [
+    * other [
 	| noob oDeg newD k |
 
-	oDeg := otherPoly getDegree.
-	newD := oDeg + degree.
-	noob := Array new: newD.
-
-	1 to: newD do: [:x| noob at: x put: 0].
-
-	1 to: degree do: [:i|
-	    1 to: oDeg do: [:j|
-		k := i + j.
-		noob at: k
-		    put: (noob at: k) + ((coeffz at: i) * (otherPoly getCoeff: j)).
+	(other isNumber)
+	    ifTrue: [
+		"scalar"
+		noob := Array new: degree.
+		1 to: degree do: [:i| noob at: i put: (coeffz at: i) * other ].
+		^Poly new: noob.
 	    ]
-	].
+	    ifFalse: [
+		"Poly"
+		oDeg := other getDegree.
+		newD := oDeg + degree.
+		noob := Array new: newD.
 
-	^Poly new: noob
+		1 to: newD do: [:x| noob at: x put: 0].
+
+		1 to: degree do: [:i|
+		    1 to: oDeg do: [:j|
+			k := i + j.
+			noob at: k
+			    put: (noob at: k) + ((coeffz at: i) * (other getCoeff: j)).
+		    ]
+		].
+
+		^Poly new: noob
+	    ]
     ]
 
     / scalar [
@@ -86,27 +96,47 @@ Smalltalk arguments do: [:arg|
 	]
     ]
     ifNotMatched: [
-	const := const + arg
+	const := const + arg asInteger
     ]
 ].
 
-bigpoly := Poly mkroll: 1.
+bigpoly := 1.
 
 polys do: [:poly|
-    bigpoly := bigpoly * poly
+    bigpoly := poly * bigpoly.
 ].
 
 bigpoly := bigpoly / combos.
 
-1 to: (bigpoly getDegree) do: [:i|
-    n  := i + const.
-    p  := (bigpoly getCoeff: i).
-    hg := (0.5 + (500 * p)) floor.
-    n display. ' ' display.
-    p display. ' ' display.
-    hg display. ' ' displayNl.
-    "And here is where the output will go..."
+floatFormatter := [:x| ((x roundTo: 0.00001) * 1e5) rounded / 1e5 ].
+
+histogram := [:x|
+    n	 := (0.5 + (500 * x)) floor.
+    hg	 := ''.
+    mark := $# asString. 
+    1 to: n do: [:i| hg := hg, mark ].
+    hg
 ].
 
-(Poly mkroll: 6) getCoeff: 1 displayNl
+tb := Character tab asString.
+nl := Character lf asString.
+tt := tb, tb.
+
+output := nl.
+
+1 to: (bigpoly getDegree) do: [:i|
+    num  := const + i.
+    pr   := (bigpoly getCoeff: i).
+
+    (pr > 0) ifTrue: [
+	hig := histogram value: pr.
+	prf := (floatFormatter value: pr) asString.
+	
+	output := (output, num asString, tt, prf, tt, hig, nl).
+    ].
+].
+
+output displayNl.
+
+
 
