@@ -15,13 +15,17 @@ perl dice.pl 1d4 1d6 1d8 1d12 -17
 php dice.php 1d4 1d6 1d8 1d12 -17  
 python dice.py 1d4 1d6 1d8 1d12 -17  
 ruby dice.rb 1d4 1d6 1d8 1d12 -17  
+gst -f dice.st 1d4 1d6 1d8 1d12 -17  
 
-compC.sh  
+sh compC.sh  
 c.exe 1d4 1d6 1d8 1d12 -17  
 
-compHaskell.sh  
+sh compHaskell.sh  
 haskell.exe 1d4 1d6 1d8 1d12 -17  
 
-compRacket.sh  
+sh compJava.sh  
+java dice.class 1d4 1d6 1d8 1d12 -17  
+
+sh compRacket.sh  
 racket.exe 1d4 1d6 1d8 1d12 -17  
 
