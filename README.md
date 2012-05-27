@@ -24,7 +24,7 @@ sh compHaskell.sh
 haskell.exe 1d4 1d6 1d8 1d12 -17  
 
 sh compJava.sh  
-java dice.class 1d4 1d6 1d8 1d12 -17  
+java dice 1d4 1d6 1d8 1d12 -17  
 
 sh compRacket.sh  
 racket.exe 1d4 1d6 1d8 1d12 -17  
